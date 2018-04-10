@@ -6,24 +6,32 @@ using System.Text;
 
 namespace MadalineOCR
 {
-    public class Neuron
+    public static class VectorExtensions
     {
-        public double[] Weights { get; private set; }
-        public string Letter { get; private set; }
-        public Neuron()
+        public static void NormalizeVector(double[] weights)
         {
+            var vectorlength = Math.Sqrt(weights.Sum(x => x * x));
 
+            if (IsNormalized(vectorlength) || vectorlength == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < weights.Length; i++)
+            {
+                weights[i] /= vectorlength;
+            }
         }
 
-        public Neuron(string filePath)
+        public static bool IsNormalized(double vectorLength)
         {
-            Letter = Path.GetFileNameWithoutExtension(filePath);
-            Weights = ReadLetterFromFile(filePath);
-            NormalizeVector(Weights);
-            Console.WriteLine("Wczytano szablon litery " + filePath);
+            return Math.Abs(vectorLength - 1d) < 0.0001;
         }
+    }
 
-        private double[] ReadLetterFromFile(string filePath)
+    public static class LetterExtensions
+    {
+        public static double[] ReadLetterFromFile(string filePath)
         {
             var letter = File.ReadAllText(filePath)
                 .Replace("\r\n", string.Empty)
@@ -39,25 +47,27 @@ namespace MadalineOCR
             var arrayOfDigits = letter.Select(digit => (double)(digit - '0')).ToArray();
             return arrayOfDigits;
         }
+    }
 
-        private static void NormalizeVector(double[] weights)
+    public class Neuron
+    {
+        public double[] Weights { get; private set; }
+        public string Letter { get; private set; }
+        public Neuron()
         {
-            var vectorlength = Math.Sqrt(weights.Sum(x => x * x));
-            
-            if (IsNormalized(vectorlength))
-            {
-                return;
-            }
 
-            for (int i = 0; i < weights.Length; i++)
-            {
-                weights[i] /= vectorlength;
-            }
         }
 
-        private static bool IsNormalized(double vectorLength)
+        public Neuron(string filePath)
         {
-            return Math.Abs(vectorLength - 1d) < 0.0001;
+            Letter = Path.GetFileNameWithoutExtension(filePath);
+            Weights = LetterExtensions.ReadLetterFromFile(filePath);
+            VectorExtensions.NormalizeVector(Weights);
+            Console.WriteLine("Wczytano szablon litery " + filePath);
         }
+
+
+
+
     }
 }

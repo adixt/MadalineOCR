@@ -19,7 +19,7 @@ namespace MadalineOCR
 
         public Network(string lettersDirectory)
         {
-             var letterFilePaths = Directory.EnumerateFiles(lettersDirectory, "*.txt").ToArray();
+            var letterFilePaths = Directory.EnumerateFiles(lettersDirectory, "*.txt").ToArray();
 
             foreach (var filePath in letterFilePaths)
             {
@@ -45,7 +45,46 @@ namespace MadalineOCR
 
         }
 
-        
+        public void Process(double[] inputVector)
+        {
+            if (letterSize != inputVector.Length)
+            {
+                throw new ArgumentException("Wprowadzony znak ma niepoprawny rozmiar matrycy");
+            }
+
+            VectorExtensions.NormalizeVector(inputVector);
+
+            var outputValues = new double[Neurons.Count];
+
+            for (int i = 0; i < Neurons.Count; i++)
+            {
+                var neuron = Neurons[i];
+                for (int j = 0; j < Neurons[i].Weights.Length; j++)
+                {
+                    outputValues[i] += neuron.Weights[j] * inputVector[j];
+                }
+            }
+
+
+            for (int i = 0; i < outputValues.Length; i++)
+            {
+                Console.WriteLine("{0}, zgodność w {1:P}", Neurons[i].Letter, outputValues[i]);
+            }
+
+            var maxValue = outputValues.Max();
+
+            if(maxValue >0)
+            {
+                var indexOfMaxValue = Array.IndexOf(outputValues, maxValue);
+                Console.WriteLine("Rozpoznana litera: " + Neurons[indexOfMaxValue].Letter);
+            }
+            else
+            {
+                Console.WriteLine("Nie rozpoznano litery");
+            }
+
+
+        }
 
         private bool AreAllNeuronsSameSize()
         {
