@@ -8,6 +8,10 @@ namespace MadalineOCR
 {
     public class Network
     {
+        private int letterSize;
+
+        public List<Neuron> Neurons { get; set; } = new List<Neuron>();
+
         public Network()
         {
 
@@ -15,27 +19,38 @@ namespace MadalineOCR
 
         public Network(string lettersDirectory)
         {
-            var letterFilePaths = Directory.EnumerateFiles(lettersDirectory, "*.txt").ToArray();
-
-            var filesParsed = new List<int[]>();
+             var letterFilePaths = Directory.EnumerateFiles(lettersDirectory, "*.txt").ToArray();
 
             foreach (var filePath in letterFilePaths)
             {
-                var letter = File.ReadAllText(filePath)
-                    .Replace("\r\n", string.Empty)
-                    .Replace('-', '0')
-                    .Replace('#', '1');
-                if (letter.Any(c => c != '0' && c != '1'))
+                try
                 {
-                    Console.WriteLine(string.Format("Plik {0} jest nieprawidłowy (zawiera znaki poza '-' i '#'", filePath));
-                    continue;
+                    var neuron = new Neuron(filePath);
+                    Neurons.Add(neuron);
                 }
-
-                var arrayOfDigits = letter.Select(digit => (digit - '0')).ToArray();
-                filesParsed.Add(arrayOfDigits);
-                Console.WriteLine("Wczytano szablon litery " + filePath);
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+            }
+            if (AreAllNeuronsSameSize())
+            {
+                letterSize = Neurons[0].Weights.Length;
+            }
+            else
+            {
+                var ex = string.Format("Nie wszystkie litery mają taki sam rozmiar");
+                throw new ArgumentException(ex);
             }
 
+        }
+
+        
+
+        private bool AreAllNeuronsSameSize()
+        {
+            var neuronsDistincsSizes = Neurons.Select(x => x.Weights.Length).Distinct().Count();
+            return neuronsDistincsSizes == 1;
         }
     }
 }
